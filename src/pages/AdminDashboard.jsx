@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { db, auth } from '../config/firebase';
 import { 
   collection, query, orderBy, onSnapshot, 
-  doc, where, Timestamp, setDoc 
+  doc, where, Timestamp, setDoc, getDoc 
 } from 'firebase/firestore';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -12,18 +12,35 @@ import {
 const AdminDashboard = ({ setViewMode }) => {
   const [logs, setLogs] = useState([]);
   const [blockedUsers, setBlockedUsers] = useState({});
+  const [isAdmin, setIsAdmin] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRange, setFilterRange] = useState("Today");
   const [filterPurpose, setFilterPurpose] = useState("All Purposes");
   const [filterCollege, setFilterCollege] = useState("All Colleges");
   const [filterUserType, setFilterUserType] = useState("All User Types");
 
-  // State for search bar focus and general hover effects
   const [searchFocus, setSearchFocus] = useState(false);
   const [hoverState, setHoverState] = useState({ 
     switch: false, signout: false, maroon: false, white: false 
   });
 
+  // Verify Admin Authorization
+  useEffect(() => {
+    const verifyAdmin = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && userDoc.data().isAdmin === true) {
+          setIsAdmin(true);
+        } else {
+          setViewMode("user"); // Security redirect
+        }
+      }
+    };
+    verifyAdmin();
+  }, [setViewMode]);
+
+  // Real-time Logs Subscription
   useEffect(() => {
     const now = new Date();
     let startDate = new Date();
@@ -48,6 +65,7 @@ const AdminDashboard = ({ setViewMode }) => {
     return () => unsubscribe();
   }, [filterRange]);
 
+  // Real-time Blocked Status Subscription
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
       const statusMap = {};
@@ -78,7 +96,7 @@ const AdminDashboard = ({ setViewMode }) => {
       const userRef = doc(db, "users", userId);
       const isCurrentlyBlocked = blockedUsers[userId] || false;
       await setDoc(userRef, { isBlocked: !isCurrentlyBlocked }, { merge: true });
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error toggling block:", e); }
   };
 
   const filteredLogs = logs.filter(log => {
@@ -90,10 +108,12 @@ const AdminDashboard = ({ setViewMode }) => {
     return matchesSearch && matchesPurpose && matchesCollege && matchesUserType;
   });
 
+  if (!isAdmin) return null; // Prevent flicker before redirect
+
   return (
     <div style={styles.pageBackground}>
       <div style={styles.fixedContainer}>
-        {/* Header */}
+        {/* Header Section */}
         <div style={styles.headerCard}>
           <h1 style={styles.title}>Admin Dashboard</h1>
           <div style={styles.headerActions}>
@@ -116,7 +136,7 @@ const AdminDashboard = ({ setViewMode }) => {
           </div>
         </div>
 
-        {/* SIDE-BY-SIDE SECTION: Chart + Stats */}
+        {/* Analytics Section */}
         <div style={styles.topSectionGrid}>
           <div style={styles.chartCard}>
             <h3 style={styles.chartTitle}>Visitor Trends</h3>
@@ -144,10 +164,7 @@ const AdminDashboard = ({ setViewMode }) => {
             <div 
               onMouseEnter={() => setHoverState(prev => ({ ...prev, maroon: true }))}
               onMouseLeave={() => setHoverState(prev => ({ ...prev, maroon: false }))}
-              style={{
-                ...styles.statCardMaroon,
-                transform: hoverState.maroon ? 'translateX(5px)' : 'translateX(0)',
-              }}
+              style={{ ...styles.statCardMaroon, transform: hoverState.maroon ? 'translateX(5px)' : 'translateX(0)' }}
             >
               <h3 style={styles.statNumWhite}>{logs.length}</h3>
               <p style={styles.statLabelWhite}>{filterRange.toUpperCase()} VISITS</p>
@@ -156,18 +173,15 @@ const AdminDashboard = ({ setViewMode }) => {
             <div 
               onMouseEnter={() => setHoverState(prev => ({ ...prev, white: true }))}
               onMouseLeave={() => setHoverState(prev => ({ ...prev, white: false }))}
-              style={{
-                ...styles.statCardWhite,
-                transform: hoverState.white ? 'translateX(5px)' : 'translateX(0)',
-              }}
+              style={{ ...styles.statCardWhite, transform: hoverState.white ? 'translateX(5px)' : 'translateX(0)' }}
             >
               <h3 style={styles.statNumDark}>{filteredLogs.length}</h3>
-              <p style={styles.statLabelGray}>RESULTS</p>
+              <p style={styles.statLabelGray}>RESULTS FOUND</p>
             </div>
           </div>
         </div>
 
-        {/* IMPROVED DROPDOWN FILTERS */}
+        {/* Dynamic Filters */}
         <div style={styles.filterCard}>
           <div style={styles.filterGroup}>
             <label style={styles.filterLabel}>User Type</label>
@@ -182,11 +196,13 @@ const AdminDashboard = ({ setViewMode }) => {
             <label style={styles.filterLabel}>College / Dept</label>
             <select style={styles.filterSelect} value={filterCollege} onChange={(e) => setFilterCollege(e.target.value)}>
               <option value="All Colleges">All Colleges</option>
-              <option value="College of Informatics and Computing Studies">CICS</option>
-              <option value="College of CS">College of CS</option>
-              <option value="College of Engineering">Engineering</option>
-              <option value="College of Arts">Arts</option>
-              <option value="College of Business">Business</option>
+              <option value="College of Informatics and Computing Studies">College of Informatics and Computing Studies</option>
+              <option value="College of Criminology">College of Criminology</option>
+              <option value="College of Nursing">College of Nursing</option>
+              <option value="College of Engineering">College of Engineering</option>
+              <option value="College of Arts and Sciences">College of Arts and Sciences</option>
+              <option value="College of Business">College of Business</option>
+              <option value="N/A">N/A</option>
             </select>
           </div>
 
@@ -197,7 +213,7 @@ const AdminDashboard = ({ setViewMode }) => {
               <option value="Computer Use">Computer Use</option>
               <option value="Research">Research</option>
               <option value="Study">Study</option>
-              <option value="Borrowing/Returning">Borrowing</option>
+              <option value="Borrowing/Returning">Borrowing/Returning</option>
             </select>
           </div>
 
@@ -212,12 +228,11 @@ const AdminDashboard = ({ setViewMode }) => {
           </div>
         </div>
 
-        {/* Search & Table */}
+        {/* Search Bar */}
         <div style={{ marginBottom: '15px' }}>
             <input
               type="text"
-              placeholder="Search name..."
-             
+              placeholder="Search by name..."
               style={{ 
                 ...styles.searchInput, 
                 borderColor: searchFocus ? '#730000' : '#eee',
@@ -230,6 +245,7 @@ const AdminDashboard = ({ setViewMode }) => {
             />
         </div>
 
+        {/* Data Table */}
         <div style={styles.tableWrapper}>
           <table style={styles.table}>
             <thead>
@@ -275,6 +291,7 @@ const AdminDashboard = ({ setViewMode }) => {
   );
 };
 
+// ... Styles (kept the same as previous)
 const styles = {
   pageBackground: { backgroundColor: '#f4f7f6', minHeight: '100vh', display: 'flex', justifyContent: 'center', padding: '30px 0' },
   fixedContainer: { width: '1100px', flexShrink: 0 },
@@ -283,11 +300,9 @@ const styles = {
   headerActions: { textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '5px' },
   btnSwitch: { color: "white", padding: "8px 14px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", fontSize: '0.8rem', transition: 'all 0.2s' },
   btnSignout: { padding: '6px', color: '#888', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.8rem' },
-  
   topSectionGrid: { display: 'flex', gap: '15px', marginBottom: '15px' , marginTop: '20px'},
   chartCard: { flex: 2, backgroundColor: 'white', padding: '15px 20px', borderRadius: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
   chartTitle: { margin: '0 0 10px 0', fontSize: '0.9rem', color: '#666', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  
   sideStatsWrapper: { flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' },
   statCardMaroon: { flex: 1, backgroundColor: '#730000', padding: '15px 25px', borderRadius: '15px', color: 'white', borderLeft: '6px solid #ffa500', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
   statCardWhite: { flex: 1, backgroundColor: 'white', padding: '15px 25px', borderRadius: '15px', borderLeft: '6px solid #730000', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
@@ -295,39 +310,17 @@ const styles = {
   statNumDark: { fontSize: '1.8rem', margin: 0, fontWeight: '800', color: '#730000' },
   statLabelWhite: { fontSize: '0.65rem', fontWeight: 'bold', marginTop: '2px', opacity: 0.8 },
   statLabelGray: { fontSize: '0.65rem', fontWeight: 'bold', color: '#999', marginTop: '2px' },
-
   filterCard: { display: 'flex', gap: '20px', marginBottom: '15px', backgroundColor: 'white', padding: '15px 25px', borderRadius: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   filterGroup: { flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' },
   filterLabel: { fontSize: '0.65rem', fontWeight: '800', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.5px', paddingLeft: '2px' },
   filterSelect: { 
-    width: '100%', 
-    padding: '10px 12px', 
-    borderRadius: '8px', 
-    border: '1px solid #eee', 
-    outline: 'none', 
-    cursor: 'pointer', 
-    fontSize: '0.85rem', 
-    fontWeight: '600',
-    color: '#444',
-    backgroundColor: '#fdfdfd',
-    appearance: 'none',
+    width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #eee', outline: 'none', cursor: 'pointer', 
+    fontSize: '0.85rem', fontWeight: '600', color: '#444', backgroundColor: '#fdfdfd', appearance: 'none',
     backgroundImage: `linear-gradient(45deg, transparent 50%, #730000 50%), linear-gradient(135deg, #730000 50%, transparent 50%)`,
     backgroundPosition: `calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px)`,
-    backgroundSize: `5px 5px, 5px 5px`,
-    backgroundRepeat: 'no-repeat',
-    transition: 'border-color 0.2s ease'
+    backgroundSize: `5px 5px, 5px 5px`, backgroundRepeat: 'no-repeat', transition: 'border-color 0.2s ease'
   },
-  
-  searchInput: { 
-    width: '320px', 
-    padding: '12px 18px', 
-    borderRadius: '12px', 
-    border: '2px solid #eee', 
-    outline: 'none', 
-    fontSize: '0.9rem', 
-    transition: 'all 0.3s ease'
-  },
-
+  searchInput: { width: '320px', padding: '12px 18px', borderRadius: '12px', border: '2px solid #eee', outline: 'none', fontSize: '0.9rem', transition: 'all 0.3s ease' },
   tableWrapper: { backgroundColor: 'white', borderRadius: '15px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   table: { width: '100%', borderCollapse: 'collapse' },
   tableHeader: { textAlign: 'left', backgroundColor: '#fafafa', borderBottom: '1px solid #eee' },
