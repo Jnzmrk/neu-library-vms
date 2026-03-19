@@ -1,22 +1,17 @@
-/* --- NEU Official Colors and Variables --- 
-   These are the global settings (CSS Variables) used throughout the app. 
-   Changing a value here updates the color or shadow everywhere instantly. */
 :root {
-  --neu-maroon: #800000;        /* Main University branding color */
-  --neu-maroon-dark: #600000;   /* Darker maroon for button hover states */
-  --neu-gold: #FFD700;          /* Accent color for borders and highlights */
+  --neu-maroon: #800000;
+  --neu-maroon-dark: #600000;
+  --neu-gold: #FFD700;
   --neu-white: #ffffff;
-  --neu-bg: #f3f4f6;            /* Background color for the dashboard area */
-  --text-main: #1a202c;         /* Primary text color (almost black) */
-  --text-muted: #718096;        /* Secondary text color (gray) for labels */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow for headers */
-  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* Medium shadow for hover */
-  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1); /* Large shadow for floating cards */
-  --radius: 12px;               /* Standard corner rounding for dashboard elements */
+  --neu-bg: #f3f4f6;
+  --text-main: #1a202c;
+  --text-muted: #718096;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --radius: 12px;
 }
 
-/* --- 1. GLOBAL RESET & LAYOUT --- 
-   Sets the default look for the entire page and handles the centering logic. */
 body, #root {
   margin: 0; 
   padding: 0;
@@ -27,34 +22,34 @@ body, #root {
   color: var(--text-main);
 }
 
-/* Logic for Admin Dashboard: Ensures the dashboard scrolls naturally and isn't centered like a card. */
 #root:has(.history-container) {
   display: block !important;
 }
 
-/* Logic for Login/Check-in: Centers the card perfectly in the middle of the screen. */
 #root:has(.card), #root:has(.student-card) {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* Premium gradient background for the auth/entry screens */
   background: linear-gradient(135deg, var(--neu-maroon) 0%, #4a0000 100%);
 }
 
-/* --- 2. PREMIUM CARDS (Login & Student Check-In) --- 
-   The styling for the white "floating" box that contains the login or check-in form. */
 .card, .student-card {
-  background: rgba(255, 255, 255, 0.95); /* Semi-transparent white */
-  backdrop-filter: blur(12px);           /* "Glassmorphism" blur effect */
-  border-radius: 28px;                   /* Extra rounded corners for a modern feel */
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 28px;
   box-shadow: var(--shadow-lg);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-top: 12px solid var(--neu-maroon); /* The thick university-branded top bar */
+  border-top: 12px solid var(--neu-maroon);
   text-align: center;
   width: 500px;
   max-width: 1110px;
   padding: 3.5rem 2.5rem;
   transition: transform 0.3s ease;
+}
+
+.card h2 {
+  font-size: 50px;
+  margin-bottom: 20px;
 }
 
 .student-card h2 {
@@ -71,20 +66,18 @@ body, #root {
   margin-bottom: 2rem;
 }
 
-/* --- 2b. DROPDOWN & FORM LAYOUT FIX --- 
-   Solves the layout issue where labels and dropdowns were clashing or squashed. */
 .checkin-form {
   display: flex;
-  flex-direction: column; /* Stacks everything vertically */
-  gap: 1.25rem;            /* Equal spacing between form groups */
+  flex-direction: column;
+  gap: 1.25rem;
   width: 100%;
   margin-top: 1.5rem;
 }
 
 .input-group {
   display: flex;
-  flex-direction: column; /* Stacks label on top of the select box */
-  text-align: left;       /* Aligns labels to the left edge */
+  flex-direction: column;
+  text-align: left;
   gap: 0.5rem;
 }
 
@@ -108,7 +101,6 @@ body, #root {
   color: var(--text-main);
   cursor: pointer;
   transition: all 0.2s ease;
-  /* Custom Arrow Logic: Removes default browser arrow and adds a custom maroon one */
   appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23800000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -120,14 +112,12 @@ body, #root {
   outline: none;
   border-color: var(--neu-maroon);
   background-color: white;
-  box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1); /* Subtle maroon glow on focus */
+  box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
 }
 
-/* --- 3. ADMIN DASHBOARD --- 
-   Styles for the main container of the Admin/Staff view. */
 .history-container {
   width: 100%;
-  max-width: 1400px; /* Limits width so tables don't stretch too far on huge screens */
+  max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
   padding: 2rem;
@@ -135,7 +125,6 @@ body, #root {
 }
 
 .admin-header {
-  
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -146,11 +135,9 @@ body, #root {
   box-shadow: var(--shadow-sm);
 }
 
-/* --- 4. ENHANCED STATS CARDS --- 
-   The small boxes on the dashboard that show "Total Visitors", etc. */
 .stats-wrapper {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); /* Responsive grid */
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2.5rem;
 }
@@ -160,16 +147,15 @@ body, #root {
   padding: 2rem;
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  border-left: 5px solid var(--neu-maroon); /* Vertical accent bar */
+  border-left: 5px solid var(--neu-maroon);
   transition: all 0.2s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px); /* Lifts card up on hover */
+  transform: translateY(-4px);
   box-shadow: var(--shadow-md);
 }
 
-/* Special styling for the "Primary" stats card */
 .stat-card.maroon {
   background: linear-gradient(135deg, var(--neu-maroon) 0%, #4a0000 100%);
   color: white;
@@ -182,8 +168,6 @@ body, #root {
   font-weight: 800;
 }
 
-/* --- 5. SEARCH & TABLE --- 
-   Styles for the search input and the data table. */
 .search-input {
   width: 100%;
   max-width: 400px;
@@ -194,13 +178,14 @@ body, #root {
   padding: 0 1.25rem;
   font-size: 1rem;
   transition: all 0.2s;
+  margin-bottom: 10px;
 }
 
 .table-wrapper {
   background: white;
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  overflow: hidden; /* Keeps table corners rounded */
+  overflow: hidden;
   border: 1px solid #edf2f7;
 }
 
@@ -210,7 +195,7 @@ table {
 }
 
 table thead th {
-  background: #f8fafc; /* Subtle gray background for headers */
+  background: #f8fafc;
   padding: 1.25rem 1.5rem;
   text-align: left;
   font-size: 0.8rem;
@@ -225,8 +210,6 @@ table td {
   border-bottom: 1px solid #f1f5f9;
 }
 
-/* --- 6. BUTTONS --- 
-   Global button styles and specific variations for Confirm/Sign-out. */
 button {
   transition: all 0.2s ease;
   font-family: inherit;
@@ -234,9 +217,8 @@ button {
   border: none;
 }
 
-button:active { transform: scale(0.98); } /* Subtle "click" animation */
+button:active { transform: scale(0.98); }
 
-/* Main Check-In Button */
 .btn-confirm {
   background: var(--neu-maroon);
   color: white;
@@ -250,7 +232,6 @@ button:active { transform: scale(0.98); } /* Subtle "click" animation */
 
 .btn-confirm:hover { background: var(--neu-maroon-dark); }
 
-/* Sign Out Button (Student View) */
 .btn-signout-student {
   background: #f1f5f9;
   color: #475569;
@@ -262,51 +243,45 @@ button:active { transform: scale(0.98); } /* Subtle "click" animation */
 }
 
 .btn-signout-student:hover {
-  background: #fee2e2; /* Turns light red on hover */
-  color: #dc2626;      /* Text turns dark red on hover */
+  background: #fee2e2; 
+  color: #dc2626;      
 }
 
-/* --- 7. AUTHENTICATION BUTTONS --- 
-   Specific styles for the "Sign in with Google" landing page button. */
-
 .btn-google {
-  display: flex;             /* Aligns the icon and text side-by-side */
-  align-items: center;       /* Centers items vertically */
-  justify-content: center;   /* Centers items horizontally */
-  gap: 12px;                 /* Space between Google logo and text */
+  display: flex;             
+  align-items: center;      
+  justify-content: center;   
+  gap: 12px;                
   background: white;
-  color: #374151;            /* Professional dark-gray text color */
-  border: 1px solid #e5e7eb; /* Subtle light border */
-  padding: 0.85rem 1.5rem;   /* Balanced padding for a premium feel */
-  border-radius: 12px;       /* Matches the radius of your check-in buttons */
+  color: #374151;            
+  border: 1px solid #e5e7eb; 
+  padding: 0.85rem 1.5rem;  
+  border-radius: 12px;     
   font-weight: 600;
   font-size: 1rem;
-  width: 100%;               /* Spans container width for better mobile tap target */
-  max-width: 320px;          /* Prevents button from getting too wide on desktop */
-  margin: 1.5rem auto 0;     /* Centers button and adds space from welcome text */
+  width: 100%;             
+  max-width: 320px;         
+  margin: 1.5rem auto 0;     
   box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
 }
 
 .btn-google:hover {
-  background: #f9fafb;       /* Very light gray background on hover */
+  background: #f9fafb;      
   box-shadow: var(--shadow-md); 
-  transform: translateY(-1px); /* Subtle lift effect when hovered */
+  transform: translateY(-1px);
 }
 
-/* Logic for the Google Icon size inside the button */
 .btn-google img {
   width: 20px;
   height: 20px;
   display: block;
 }
 
-/* Transition for clicking the button */
 .btn-google:active {
-  transform: scale(0.98);    /* Slight "press down" animation */
+  transform: scale(0.98);    
 }
 
-/* Styling for the Date Filter Dropdown */
 .filter-select {
   height: 42px;
   padding: 0 1rem;
@@ -318,27 +293,21 @@ button:active { transform: scale(0.98); } /* Subtle "click" animation */
   font-size: 0.9rem;
   color: var(--text-main);
   cursor: pointer;
-  margin-right: 1rem; /* Space before the Export button */
+  margin-right: 1rem; 
   transition: all 0.2s;
 }
 
 .filter-select:focus {
   outline: none;
-  border-color: var(--neu-maroon); /* Thematic maroon focus */
-}
-
-.filter-select {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background-color: white;
-  font-weight: 600;
-  color: var(--text-main);
-  margin-right: 1rem;
-  cursor: pointer;
-}
-
-.filter-select:focus {
   border-color: var(--neu-maroon);
-  outline: none;
+}
+
+.btn-block {
+  background-color: #722f37; 
+  color: white;
+}
+
+.btn-unblock {
+  background-color: #4a4a4a; 
+  color: white;
 }
