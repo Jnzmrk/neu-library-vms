@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { db, auth } from '../config/firebase';
 import { 
   collection, query, orderBy, onSnapshot, 
-  doc, where, Timestamp, setDoc, getDoc 
+  doc, where, Timestamp, setDoc 
 } from 'firebase/firestore';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -12,7 +12,6 @@ import {
 const AdminDashboard = ({ setViewMode }) => {
   const [logs, setLogs] = useState([]);
   const [blockedUsers, setBlockedUsers] = useState({});
-  const [isAdmin, setIsAdmin] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRange, setFilterRange] = useState("Today");
   const [filterPurpose, setFilterPurpose] = useState("All Purposes");
@@ -23,22 +22,6 @@ const AdminDashboard = ({ setViewMode }) => {
   const [hoverState, setHoverState] = useState({ 
     switch: false, signout: false, maroon: false, white: false 
   });
-
-  // Verify Admin Authorization
-  useEffect(() => {
-    const verifyAdmin = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && userDoc.data().isAdmin === true) {
-          setIsAdmin(true);
-        } else {
-          setViewMode("user"); // Security redirect
-        }
-      }
-    };
-    verifyAdmin();
-  }, [setViewMode]);
 
   // Real-time Logs Subscription
   useEffect(() => {
@@ -65,7 +48,7 @@ const AdminDashboard = ({ setViewMode }) => {
     return () => unsubscribe();
   }, [filterRange]);
 
-  // Real-time Blocked Status Subscription
+  // Blocked Status Sync
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
       const statusMap = {};
@@ -96,7 +79,7 @@ const AdminDashboard = ({ setViewMode }) => {
       const userRef = doc(db, "users", userId);
       const isCurrentlyBlocked = blockedUsers[userId] || false;
       await setDoc(userRef, { isBlocked: !isCurrentlyBlocked }, { merge: true });
-    } catch (e) { console.error("Error toggling block:", e); }
+    } catch (e) { console.error(e); }
   };
 
   const filteredLogs = logs.filter(log => {
@@ -108,12 +91,10 @@ const AdminDashboard = ({ setViewMode }) => {
     return matchesSearch && matchesPurpose && matchesCollege && matchesUserType;
   });
 
-  if (!isAdmin) return null; // Prevent flicker before redirect
-
   return (
     <div style={styles.pageBackground}>
       <div style={styles.fixedContainer}>
-        {/* Header Section */}
+        {/* Header */}
         <div style={styles.headerCard}>
           <h1 style={styles.title}>Admin Dashboard</h1>
           <div style={styles.headerActions}>
@@ -176,12 +157,12 @@ const AdminDashboard = ({ setViewMode }) => {
               style={{ ...styles.statCardWhite, transform: hoverState.white ? 'translateX(5px)' : 'translateX(0)' }}
             >
               <h3 style={styles.statNumDark}>{filteredLogs.length}</h3>
-              <p style={styles.statLabelGray}>RESULTS FOUND</p>
+              <p style={styles.statLabelGray}>RESULTS</p>
             </div>
           </div>
         </div>
 
-        {/* Dynamic Filters */}
+        {/* Sync'd Filters */}
         <div style={styles.filterCard}>
           <div style={styles.filterGroup}>
             <label style={styles.filterLabel}>User Type</label>
@@ -196,12 +177,12 @@ const AdminDashboard = ({ setViewMode }) => {
             <label style={styles.filterLabel}>College / Dept</label>
             <select style={styles.filterSelect} value={filterCollege} onChange={(e) => setFilterCollege(e.target.value)}>
               <option value="All Colleges">All Colleges</option>
-              <option value="College of Informatics and Computing Studies">College of Informatics and Computing Studies</option>
-              <option value="College of Criminology">College of Criminology</option>
-              <option value="College of Nursing">College of Nursing</option>
-              <option value="College of Engineering">College of Engineering</option>
-              <option value="College of Arts and Sciences">College of Arts and Sciences</option>
-              <option value="College of Business">College of Business</option>
+              <option value="College of Informatics and Computing Studies">Informatics and Computing Studies</option>
+              <option value="College of Criminology">Criminology</option>
+              <option value="College of Nursing">Nursing</option>
+              <option value="College of Engineering">Engineering</option>
+              <option value="College of Arts and Sciences">Arts and Sciences</option>
+              <option value="College of Business">Business</option>
               <option value="N/A">N/A</option>
             </select>
           </div>
@@ -228,11 +209,11 @@ const AdminDashboard = ({ setViewMode }) => {
           </div>
         </div>
 
-        {/* Search Bar */}
+        {/* Search & Table */}
         <div style={{ marginBottom: '15px' }}>
             <input
               type="text"
-              placeholder="Search by name..."
+              placeholder="Search name..."
               style={{ 
                 ...styles.searchInput, 
                 borderColor: searchFocus ? '#730000' : '#eee',
@@ -245,7 +226,6 @@ const AdminDashboard = ({ setViewMode }) => {
             />
         </div>
 
-        {/* Data Table */}
         <div style={styles.tableWrapper}>
           <table style={styles.table}>
             <thead>
@@ -291,7 +271,6 @@ const AdminDashboard = ({ setViewMode }) => {
   );
 };
 
-// ... Styles (kept the same as previous)
 const styles = {
   pageBackground: { backgroundColor: '#f4f7f6', minHeight: '100vh', display: 'flex', justifyContent: 'center', padding: '30px 0' },
   fixedContainer: { width: '1100px', flexShrink: 0 },
