@@ -7,9 +7,8 @@ const CheckIn = ({ isAdmin, setViewMode }) => {
   const [purpose, setPurpose] = useState("");
   const [userType, setUserType] = useState("Student");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false); // Success state
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  // Hover states
   const [isConfirmHovered, setIsConfirmHovered] = useState(false);
   const [isSignOutHovered, setIsSignOutHovered] = useState(false);
   const [isAdminHovered, setIsAdminHovered] = useState(false);
@@ -24,30 +23,33 @@ const CheckIn = ({ isAdmin, setViewMode }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!college || !purpose) return alert("Please fill in all fields.");
+    
     setIsSubmitting(true);
-    try {
-      await addDoc(collection(db, "checkins"), {
-        userId: auth.currentUser.uid,
-        name: auth.currentUser.displayName,
-        email: auth.currentUser.email,
-        userType: userType,
-        college: college,
-        purpose: purpose,
-        timestamp: serverTimestamp(),
-      });
+    
+    // Clean the data before sending
+    const checkinData = {
+      userId: auth.currentUser.uid,
+      name: auth.currentUser.displayName,
+      email: auth.currentUser.email,
+      userType: userType,
+      college: college.trim(), // Ensure no trailing spaces
+      purpose: purpose,
+      timestamp: serverTimestamp(),
+    };
 
-      // Show the green success popup
+    console.log("Submitting Check-in Data:", checkinData);
+
+    try {
+      await addDoc(collection(db, "checkins"), checkinData);
+
       setShowSuccess(true);
-      
-      // Reset form
       setPurpose("");
       setCollege("");
       
-      // Hide popup after 2 seconds
       setTimeout(() => setShowSuccess(false), 2000);
 
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Firebase Error:", error);
       alert("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -56,7 +58,6 @@ const CheckIn = ({ isAdmin, setViewMode }) => {
 
   return (
     <div style={styles.page}>
-      {/* Green Success Popup Overlay */}
       {showSuccess && (
         <div style={styles.overlay}>
           <div style={styles.successCard}>
@@ -119,8 +120,9 @@ const CheckIn = ({ isAdmin, setViewMode }) => {
             <label style={styles.label}>COLLEGE / DEPARTMENT</label>
             <select value={college} onChange={(e) => setCollege(e.target.value)} style={styles.select}>
               <option value="">Select College</option>
-              <option value="College of College of Informatics and Computing Studies">College of Informatics and Computing Studies</option>
-               <option value="College of Criminology">College of Criminology</option>
+              {/* FIXED VALUE BELOW: Removed the double "College of" typo */}
+              <option value="College of Informatics and Computing Studies">College of Informatics and Computing Studies</option>
+              <option value="College of Criminology">College of Criminology</option>
               <option value="College of Nursing">College of Nursing</option>
               <option value="College of Engineering">College of Engineering</option>
               <option value="College of Arts and Sciences">College of Arts and Sciences</option>
@@ -184,56 +186,13 @@ const CheckIn = ({ isAdmin, setViewMode }) => {
 };
 
 const styles = {
-  page: {
-    backgroundColor: "#730000",
-    height: "100vh",
-    width: "100vw",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontFamily: "'Inter', sans-serif",
-    position: "fixed",
-    top: 0, left: 0, margin: 0, padding: 0
-  },
-  overlay: {
-    position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    backdropFilter: 'blur(4px)',
-  },
-  successCard: {
-    backgroundColor: 'white',
-    padding: '40px',
-    borderRadius: '24px',
-    textAlign: 'center',
-    boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-    width: '320px'
-  },
-  checkCircle: {
-    width: '60px', height: '60px',
-    backgroundColor: '#28a745',
-    color: 'white',
-    borderRadius: '50%',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: '30px',
-    margin: '0 auto 20px auto',
-  },
+  page: { backgroundColor: "#730000", height: "100vh", width: "100vw", display: "flex", justifyContent: "center", alignItems: "center", fontFamily: "'Inter', sans-serif", position: "fixed", top: 0, left: 0, margin: 0, padding: 0 },
+  overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' },
+  successCard: { backgroundColor: 'white', padding: '40px', borderRadius: '24px', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', width: '320px' },
+  checkCircle: { width: '60px', height: '60px', backgroundColor: '#28a745', color: 'white', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '30px', margin: '0 auto 20px auto' },
   successTitle: { margin: '0 0 10px 0', color: '#333', fontSize: '1.4rem' },
   successSub: { margin: 0, color: '#777', fontSize: '0.9rem' },
-  card: {
-    backgroundColor: "#ffffff",
-    width: "360px", 
-    padding: "24px 32px",
-    borderRadius: "24px",
-    textAlign: "center",
-    boxShadow: "0 15px 35px rgba(0,0,0,0.2)"
-  },
+  card: { backgroundColor: "#ffffff", width: "360px", padding: "24px 32px", borderRadius: "24px", textAlign: "center", boxShadow: "0 15px 35px rgba(0,0,0,0.2)" },
   mainTitle: { color: "#730000", fontSize: "1.5rem", fontWeight: "800", margin: "0" },
   welcomeText: { color: "#888", fontSize: "0.85rem", marginBottom: "20px" },
   userName: { fontWeight: "700", color: "#444" },
@@ -242,28 +201,9 @@ const styles = {
   label: { fontSize: "0.65rem", fontWeight: "700", color: "#adb5bd", marginBottom: "6px", display: "block", textTransform: "uppercase" },
   toggleRow: { display: "flex", gap: "8px" },
   toggleBtn: { flex: 1, padding: "10px", borderRadius: "10px", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer", transition: "all 0.2s" },
-  select: { 
-    width: "100%", padding: "10px 15px", borderRadius: "12px", border: "1px solid #dee2e6", 
-    fontSize: "0.9rem", outline: "none", backgroundColor: "#fff", color: "#495057", cursor: "pointer"
-  },
-  confirmBtn: { 
-    width: "100%", color: "white", padding: "12px", border: "none", borderRadius: "12px", 
-    fontSize: "0.9rem", fontWeight: "700", cursor: "pointer", marginTop: "10px", transition: "all 0.3s ease" 
-  },
-  secondaryBtn: {
-    width: "100%",
-    padding: "10px 20px",
-    border: "1px solid #dee2e6",
-    borderRadius: "12px",
-    fontSize: "0.85rem",
-    fontWeight: "600",
-    cursor: "pointer",
-    textAlign: "center",
-    transition: "all 0.3s ease",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center"
-  },
+  select: { width: "100%", padding: "10px 15px", borderRadius: "12px", border: "1px solid #dee2e6", fontSize: "0.9rem", outline: "none", backgroundColor: "#fff", color: "#495057", cursor: "pointer" },
+  confirmBtn: { width: "100%", color: "white", padding: "12px", border: "none", borderRadius: "12px", fontSize: "0.9rem", fontWeight: "700", cursor: "pointer", marginTop: "10px", transition: "all 0.3s ease" },
+  secondaryBtn: { width: "100%", padding: "10px 20px", border: "1px solid #dee2e6", borderRadius: "12px", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer", textAlign: "center", transition: "all 0.3s ease", display: "flex", justifyContent: "center", alignItems: "center" },
   cardFooter: { marginTop: "16px" }
 };
 
