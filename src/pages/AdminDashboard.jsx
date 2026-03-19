@@ -177,12 +177,12 @@ const AdminDashboard = ({ setViewMode }) => {
             <label style={styles.filterLabel}>College / Dept</label>
             <select style={styles.filterSelect} value={filterCollege} onChange={(e) => setFilterCollege(e.target.value)}>
               <option value="All Colleges">All Colleges</option>
-              <option value="College of Informatics and Computing Studies">Informatics and Computing Studies</option>
-              <option value="College of Criminology">Criminology</option>
-              <option value="College of Nursing">Nursing</option>
-              <option value="College of Engineering">Engineering</option>
-              <option value="College of Arts and Sciences">Arts and Sciences</option>
-              <option value="College of Business">Business</option>
+              <option value="College of Informatics and Computing Studies">College of Informatics and Computing Studies</option>
+              <option value="College of Criminology">College of Criminology</option>
+              <option value="College of Nursing">College of Nursing</option>
+              <option value="College of Engineering">College of Engineering</option>
+              <option value="College of Arts and Sciences">College of Arts and Sciences</option>
+              <option value="College of Business">College of Business</option>
               <option value="N/A">N/A</option>
             </select>
           </div>
