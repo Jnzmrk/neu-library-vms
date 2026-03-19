@@ -43,7 +43,9 @@ const AdminDashboard = ({ setViewMode }) => {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setLogs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const fetchedLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log("Raw Logs from Firebase:", fetchedLogs); // Debugging line
+      setLogs(fetchedLogs);
     });
     return () => unsubscribe();
   }, [filterRange]);
@@ -82,12 +84,19 @@ const AdminDashboard = ({ setViewMode }) => {
     } catch (e) { console.error(e); }
   };
 
+  // INTEGRATED IMPROVED FILTER LOGIC
   const filteredLogs = logs.filter(log => {
     const matchesSearch = log.name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPurpose = filterPurpose === "All Purposes" || log.purpose === filterPurpose;
-    const matchesCollege = filterCollege === "All Colleges" || log.college === filterCollege;
+    
+    // Robust College Matching
+    const logCollege = log.college ? log.college.trim() : "N/A";
+    const selectedFilter = filterCollege.trim();
+    const matchesCollege = filterCollege === "All Colleges" || logCollege === selectedFilter;
+    
     const isEmployee = log.email?.includes('staff') || log.email?.includes('teacher') || log.userType === 'Employee';
     const matchesUserType = filterUserType === "All User Types" || (filterUserType === "Employee" && isEmployee) || (filterUserType === "Student" && !isEmployee);
+    
     return matchesSearch && matchesPurpose && matchesCollege && matchesUserType;
   });
 
@@ -162,7 +171,7 @@ const AdminDashboard = ({ setViewMode }) => {
           </div>
         </div>
 
-        {/* Sync'd Filters */}
+        {/* Filters */}
         <div style={styles.filterCard}>
           <div style={styles.filterGroup}>
             <label style={styles.filterLabel}>User Type</label>
@@ -265,49 +274,55 @@ const AdminDashboard = ({ setViewMode }) => {
               })}
             </tbody>
           </table>
+          {filteredLogs.length === 0 && (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
+              No check-ins found for the selected filters.
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
+// ... keep your styles object exactly as it was ...
 const styles = {
-  pageBackground: { backgroundColor: '#f4f7f6', minHeight: '100vh', display: 'flex', justifyContent: 'center', padding: '30px 0' },
-  fixedContainer: { width: '1100px', flexShrink: 0 },
-  headerCard: { marginTop:'-25px', paddingBottom: '20px',backgroundColor: 'white', padding: '20px 40px', borderRadius: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
-  title: { margin: 0, fontSize: '28px', fontWeight: '800', color: '#730000' },
-  headerActions: { textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '5px' },
-  btnSwitch: { color: "white", padding: "8px 14px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", fontSize: '0.8rem', transition: 'all 0.2s' },
-  btnSignout: { padding: '6px', color: '#888', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.8rem' },
-  topSectionGrid: { display: 'flex', gap: '15px', marginBottom: '15px' , marginTop: '20px'},
-  chartCard: { flex: 2, backgroundColor: 'white', padding: '15px 20px', borderRadius: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
-  chartTitle: { margin: '0 0 10px 0', fontSize: '0.9rem', color: '#666', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  sideStatsWrapper: { flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' },
-  statCardMaroon: { flex: 1, backgroundColor: '#730000', padding: '15px 25px', borderRadius: '15px', color: 'white', borderLeft: '6px solid #ffa500', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
-  statCardWhite: { flex: 1, backgroundColor: 'white', padding: '15px 25px', borderRadius: '15px', borderLeft: '6px solid #730000', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
-  statNumWhite: { fontSize: '1.8rem', margin: 0, fontWeight: '800' },
-  statNumDark: { fontSize: '1.8rem', margin: 0, fontWeight: '800', color: '#730000' },
-  statLabelWhite: { fontSize: '0.65rem', fontWeight: 'bold', marginTop: '2px', opacity: 0.8 },
-  statLabelGray: { fontSize: '0.65rem', fontWeight: 'bold', color: '#999', marginTop: '2px' },
-  filterCard: { display: 'flex', gap: '20px', marginBottom: '15px', backgroundColor: 'white', padding: '15px 25px', borderRadius: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
-  filterGroup: { flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' },
-  filterLabel: { fontSize: '0.65rem', fontWeight: '800', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.5px', paddingLeft: '2px' },
-  filterSelect: { 
-    width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #eee', outline: 'none', cursor: 'pointer', 
-    fontSize: '0.85rem', fontWeight: '600', color: '#444', backgroundColor: '#fdfdfd', appearance: 'none',
-    backgroundImage: `linear-gradient(45deg, transparent 50%, #730000 50%), linear-gradient(135deg, #730000 50%, transparent 50%)`,
-    backgroundPosition: `calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px)`,
-    backgroundSize: `5px 5px, 5px 5px`, backgroundRepeat: 'no-repeat', transition: 'border-color 0.2s ease'
-  },
-  searchInput: { width: '320px', padding: '12px 18px', borderRadius: '12px', border: '2px solid #eee', outline: 'none', fontSize: '0.9rem', transition: 'all 0.3s ease' },
-  tableWrapper: { backgroundColor: 'white', borderRadius: '15px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
-  table: { width: '100%', borderCollapse: 'collapse' },
-  tableHeader: { textAlign: 'left', backgroundColor: '#fafafa', borderBottom: '1px solid #eee' },
-  th: { padding: '12px 20px', color: '#aaa', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase' },
-  td: { padding: '14px 20px', borderBottom: '1px solid #f9f9f9', fontSize: '0.85rem' },
-  typeBadge: { padding: '4px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '800' },
-  truncate: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-  btnBlock: { color: "white", width: '100%', padding: "6px 0", border: "none", borderRadius: "5px", cursor: "pointer", fontWeight: "bold", fontSize: '0.75rem' }
-};
+    pageBackground: { backgroundColor: '#f4f7f6', minHeight: '100vh', display: 'flex', justifyContent: 'center', padding: '30px 0' },
+    fixedContainer: { width: '1100px', flexShrink: 0 },
+    headerCard: { marginTop:'-25px', paddingBottom: '20px',backgroundColor: 'white', padding: '20px 40px', borderRadius: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+    title: { margin: 0, fontSize: '28px', fontWeight: '800', color: '#730000' },
+    headerActions: { textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '5px' },
+    btnSwitch: { color: "white", padding: "8px 14px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", fontSize: '0.8rem', transition: 'all 0.2s' },
+    btnSignout: { padding: '6px', color: '#888', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.8rem' },
+    topSectionGrid: { display: 'flex', gap: '15px', marginBottom: '15px' , marginTop: '20px'},
+    chartCard: { flex: 2, backgroundColor: 'white', padding: '15px 20px', borderRadius: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+    chartTitle: { margin: '0 0 10px 0', fontSize: '0.9rem', color: '#666', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' },
+    sideStatsWrapper: { flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' },
+    statCardMaroon: { flex: 1, backgroundColor: '#730000', padding: '15px 25px', borderRadius: '15px', color: 'white', borderLeft: '6px solid #ffa500', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+    statCardWhite: { flex: 1, backgroundColor: 'white', padding: '15px 25px', borderRadius: '15px', borderLeft: '6px solid #730000', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+    statNumWhite: { fontSize: '1.8rem', margin: 0, fontWeight: '800' },
+    statNumDark: { fontSize: '1.8rem', margin: 0, fontWeight: '800', color: '#730000' },
+    statLabelWhite: { fontSize: '0.65rem', fontWeight: 'bold', marginTop: '2px', opacity: 0.8 },
+    statLabelGray: { fontSize: '0.65rem', fontWeight: 'bold', color: '#999', marginTop: '2px' },
+    filterCard: { display: 'flex', gap: '20px', marginBottom: '15px', backgroundColor: 'white', padding: '15px 25px', borderRadius: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+    filterGroup: { flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' },
+    filterLabel: { fontSize: '0.65rem', fontWeight: '800', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.5px', paddingLeft: '2px' },
+    filterSelect: { 
+      width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #eee', outline: 'none', cursor: 'pointer', 
+      fontSize: '0.85rem', fontWeight: '600', color: '#444', backgroundColor: '#fdfdfd', appearance: 'none',
+      backgroundImage: `linear-gradient(45deg, transparent 50%, #730000 50%), linear-gradient(135deg, #730000 50%, transparent 50%)`,
+      backgroundPosition: `calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px)`,
+      backgroundSize: `5px 5px, 5px 5px`, backgroundRepeat: 'no-repeat', transition: 'border-color 0.2s ease'
+    },
+    searchInput: { width: '320px', padding: '12px 18px', borderRadius: '12px', border: '2px solid #eee', outline: 'none', fontSize: '0.9rem', transition: 'all 0.3s ease' },
+    tableWrapper: { backgroundColor: 'white', borderRadius: '15px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+    table: { width: '100%', borderCollapse: 'collapse' },
+    tableHeader: { textAlign: 'left', backgroundColor: '#fafafa', borderBottom: '1px solid #eee' },
+    th: { padding: '12px 20px', color: '#aaa', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase' },
+    td: { padding: '14px 20px', borderBottom: '1px solid #f9f9f9', fontSize: '0.85rem' },
+    typeBadge: { padding: '4px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '800' },
+    truncate: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+    btnBlock: { color: "white", width: '100%', padding: "6px 0", border: "none", borderRadius: "5px", cursor: "pointer", fontWeight: "bold", fontSize: '0.75rem' }
+  };
 
 export default AdminDashboard;
